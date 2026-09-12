@@ -8,7 +8,7 @@ I wanted to build something that isn't just another CRUD API. Handling money mea
 
 ## Core ideas
 
-- Balances aren't stored directly — they're derived from ledger entries. Every transaction writes a debit and a matching credit, and the database rejects anything that doesn't balance to zero.
+- Every transfer writes a matching debit and credit as a single database transaction. Before anything commits, the entries are checked to sum to zero — if they don't, nothing is written.
 - Transfers lock the wallet rows involved before changing anything, so two concurrent requests can't corrupt a balance.
 - Mutating requests accept an `Idempotency-Key` header, so a retried request can't charge someone twice.
 
@@ -18,7 +18,7 @@ Python, Django, Django REST Framework, PostgreSQL, Celery, Redis, Docker.
 
 ## Status
 
-User accounts and wallets (one per currency) are working end to end. The ledger and transfer logic are next.
+User accounts, wallets, and transfers (with row-locked, concurrency-safe balance updates) are working end to end. Deposits/withdrawals and the idempotency-key mechanism are next.
 
 ## Setup
 
