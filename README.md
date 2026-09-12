@@ -25,12 +25,12 @@ User accounts and wallets (one per currency) are working end to end. The ledger 
 ```bash
 git clone <repo-url>
 cd vaultis-api
-python -m venv venv
-venv\Scripts\activate       # macOS/Linux: source venv/bin/activate
-pip install -r requirements/base.txt
-python manage.py migrate
-python manage.py runserver
+cp .env.example .env          # then edit values if needed
+docker compose up --build
+docker compose exec web python manage.py migrate
 ```
+
+API available at `http://localhost:8000/`, docs at `/api/docs/`.
 
 ## License
 
