@@ -18,7 +18,7 @@ Python, Django, Django REST Framework, PostgreSQL, Celery, Redis, Docker.
 
 ## Status
 
-Just getting started. The project skeleton (settings, Celery wiring) is in place. Wallets, the ledger, and transfers are next.
+User accounts and wallets (one per currency) are working end to end. The ledger and transfer logic are next.
 
 ## Setup
 
