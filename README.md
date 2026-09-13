@@ -10,7 +10,7 @@ I wanted to build something that isn't just another CRUD API. Handling money mea
 
 - Every transfer writes a matching debit and credit as a single database transaction. Before anything commits, the entries are checked to sum to zero — if they don't, nothing is written.
 - Transfers lock the wallet rows involved before changing anything, so two concurrent requests can't corrupt a balance.
-- Mutating requests accept an `Idempotency-Key` header, so a retried request can't charge someone twice.
+- The transfer endpoint accepts an `Idempotency-Key` header — a retried request with the same key and the same payload replays the original response instead of moving money again. Reusing the same key for a different request is rejected rather than silently allowed.
 
 ## Stack
 
@@ -18,7 +18,7 @@ Python, Django, Django REST Framework, PostgreSQL, Celery, Redis, Docker.
 
 ## Status
 
-User accounts, wallets, and transfers (with row-locked, concurrency-safe balance updates) are working end to end. Deposits/withdrawals and the idempotency-key mechanism are next.
+User accounts, wallets, and transfers (row-locked, concurrency-safe, idempotent) are working end to end. Deposits and withdrawals via Stripe are next.
 
 ## Setup
 
