@@ -20,6 +20,14 @@ Python, Django, Django REST Framework, PostgreSQL, Celery, Redis, Docker.
 
 User accounts, wallets, and transfers (row-locked, concurrency-safe, idempotent) are working end to end. Deposits and withdrawals via Stripe are next.
 
+## Running tests
+
+```bash
+docker compose exec web pytest
+```
+
+19 tests, including two that fire real concurrent requests at the transfer and idempotency endpoints to prove the row-locking and race-safety actually hold under load, not just in a single-request happy path. Coverage is gated at 90%.
+
 ## Setup
 
 ```bash

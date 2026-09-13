@@ -7,8 +7,8 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-COPY requirements/base.txt requirements/base.txt
-RUN pip install --no-cache-dir -r requirements/base.txt
+COPY requirements/ requirements/
+RUN pip install --no-cache-dir -r requirements/dev.txt
 
 COPY . .
 
