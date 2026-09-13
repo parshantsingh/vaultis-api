@@ -1,5 +1,7 @@
 # Vaultis API
 
+![CI](https://github.com/parshantsingh/vaultis-api/actions/workflows/ci.yml/badge.svg)
+
 A wallet and payments backend built with Django REST Framework. Users hold balances, transfer money to each other, and every transaction is backed by a proper ledger instead of a single balance column that can quietly drift out of sync.
 
 ## Why this project
@@ -26,7 +28,7 @@ User accounts, wallets, and transfers (row-locked, concurrency-safe, idempotent)
 docker compose exec web pytest
 ```
 
-19 tests, including two that fire real concurrent requests at the transfer and idempotency endpoints to prove the row-locking and race-safety actually hold under load, not just in a single-request happy path. Coverage is gated at 90%.
+19 tests, including two that fire real concurrent requests at the transfer and idempotency endpoints to prove the row-locking and race-safety actually hold under load, not just in a single-request happy path. Coverage is gated at 90%. Every push to `main` and every pull request runs this same suite via GitHub Actions (see the badge above).
 
 ## Setup
 

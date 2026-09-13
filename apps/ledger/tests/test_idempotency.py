@@ -1,6 +1,7 @@
 import threading
 
 import pytest
+from django.db import connection
 from rest_framework.test import APIClient
 
 from apps.users.factories import UserFactory
@@ -94,12 +95,15 @@ class TestIdempotencyConcurrency:
         def fire():
             client = APIClient()
             client.force_authenticate(user=sender)
-            response = client.post(
-                "/api/v1/ledger/transfers/", payload, format="json", HTTP_IDEMPOTENCY_KEY="race-key"
-            )
-            txn_id = response.data.get("id") if response.status_code == 201 else None
-            with lock:
-                results.append((response.status_code, txn_id))
+            try:
+                response = client.post(
+                    "/api/v1/ledger/transfers/", payload, format="json", HTTP_IDEMPOTENCY_KEY="race-key"
+                )
+                txn_id = response.data.get("id") if response.status_code == 201 else None
+                with lock:
+                    results.append((response.status_code, txn_id))
+            finally:
+                connection.close()
 
         threads = [threading.Thread(target=fire) for _ in range(10)]
         for t in threads:

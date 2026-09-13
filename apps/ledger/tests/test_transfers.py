@@ -1,6 +1,7 @@
 import threading
 
 import pytest
+from django.db import connection
 from rest_framework.test import APIClient
 
 from apps.users.factories import UserFactory
@@ -108,11 +109,19 @@ class TestTransferConcurrency:
         def fire():
             client = APIClient()
             client.force_authenticate(user=sender)
-            response = client.post(
-                "/api/v1/ledger/transfers/", transfer_payload(from_wallet, to_wallet, 10000), format="json"
-            )
-            with lock:
-                results.append(response.status_code)
+            try:
+                response = client.post(
+                    "/api/v1/ledger/transfers/", transfer_payload(from_wallet, to_wallet, 10000), format="json"
+                )
+                with lock:
+                    results.append(response.status_code)
+            finally:
+                # Each thread gets its own DB connection (that's the whole point — see
+                # the tutorial). Django only auto-closes connections at the end of an
+                # HTTP request/response cycle on the *main* thread; a plain Python
+                # thread has no such cycle, so without this the connection is only
+                # closed later by garbage collection, which logs a ResourceWarning.
+                connection.close()
 
         threads = [threading.Thread(target=fire) for _ in range(10)]
         for t in threads:
