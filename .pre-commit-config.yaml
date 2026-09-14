@@ -1,0 +1,38 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-yaml
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.7
+    hooks:
+      - id: ruff
+        args: [--fix]
+
+  - repo: https://github.com/psf/black
+    rev: 26.5.1
+    hooks:
+      # pyproject.toml's extend-exclude only applies when black walks directories
+      # itself — pre-commit always passes explicit filenames, which bypasses that
+      # entirely. This `exclude` is pre-commit's own mechanism: it filters which files
+      # reach the hook in the first place, so migrations never get passed to black at all.
+      - id: black
+        exclude: ^.*/migrations/.*$
+
+  - repo: local
+    hooks:
+      # mypy needs the project's actual dependencies (Django, DRF, django-stubs) on the
+      # path to type-check meaningfully — an isolated per-hook environment (what the
+      # other hooks above use) wouldn't have any of that installed. `system` runs
+      # whatever mypy is already on PATH, i.e. requirements/dev.txt's install.
+      - id: mypy
+        name: mypy
+        entry: mypy apps config
+        language: system
+        pass_filenames: false
+        types: [python]

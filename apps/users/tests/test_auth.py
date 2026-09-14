@@ -1,7 +1,7 @@
 import pytest
 from rest_framework.test import APIClient
 
-from apps.users.factories import UserFactory
+from apps.users.factories import make_user
 from apps.users.models import User
 
 
@@ -47,7 +47,7 @@ class TestMe:
         assert response.status_code == 401
 
     def test_me_returns_the_authenticated_users_profile(self):
-        user = UserFactory(email="me@test.com")
+        user = make_user(email="me@test.com")
         client = APIClient()
         client.force_authenticate(user=user)
 

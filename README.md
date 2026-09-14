@@ -30,6 +30,16 @@ docker compose exec web pytest
 
 19 tests, including two that fire real concurrent requests at the transfer and idempotency endpoints to prove the row-locking and race-safety actually hold under load, not just in a single-request happy path. Coverage is gated at 90%. Every push to `main` and every pull request runs this same suite via GitHub Actions (see the badge above).
 
+## Code quality
+
+```bash
+pip install -r requirements/dev.txt
+pre-commit install       # runs ruff, black, and mypy automatically on every commit
+pre-commit run --all-files
+```
+
+Ruff lints and sorts imports, Black formats, mypy type-checks against django-stubs. All three also run in CI on every push.
+
 ## Setup
 
 ```bash

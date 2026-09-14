@@ -1,14 +1,14 @@
 import pytest
 from rest_framework.test import APIClient
 
-from apps.users.factories import UserFactory
-from apps.wallets.factories import WalletFactory
+from apps.users.factories import make_user
+from apps.wallets.factories import make_wallet
 
 
 @pytest.mark.django_db
 class TestWalletCreation:
     def test_create_wallet_starts_at_zero_balance(self):
-        user = UserFactory()
+        user = make_user()
         client = APIClient()
         client.force_authenticate(user=user)
 
@@ -24,8 +24,8 @@ class TestWalletCreation:
         unhandled 500 (IntegrityError). Fixed with a UniqueTogetherValidator that checks
         before attempting the write. This test exists so that bug can't come back
         unnoticed."""
-        user = UserFactory()
-        WalletFactory(owner=user, currency="USD")
+        user = make_user()
+        make_wallet(owner=user, currency="USD")
         client = APIClient()
         client.force_authenticate(user=user)
 
@@ -35,8 +35,8 @@ class TestWalletCreation:
         assert "already have a wallet" in str(response.data).lower()
 
     def test_different_currency_is_allowed(self):
-        user = UserFactory()
-        WalletFactory(owner=user, currency="USD")
+        user = make_user()
+        make_wallet(owner=user, currency="USD")
         client = APIClient()
         client.force_authenticate(user=user)
 
@@ -53,9 +53,9 @@ class TestWalletListing:
         assert response.status_code == 401
 
     def test_only_shows_the_requesting_users_own_wallets(self):
-        user = UserFactory()
-        other_user = UserFactory()
-        WalletFactory(owner=other_user, currency="USD")
+        user = make_user()
+        other_user = make_user()
+        make_wallet(owner=other_user, currency="USD")
         client = APIClient()
         client.force_authenticate(user=user)
 

@@ -1,7 +1,14 @@
+from typing import TYPE_CHECKING
+
 from django.contrib.auth.base_user import BaseUserManager
 
+if TYPE_CHECKING:
+    # Only imported for type checking, never at runtime — models.py imports this file
+    # (for User.objects = UserManager()), so a real import here would be circular.
+    from .models import User  # noqa: F401 — used as a forward-referenced type below, not at runtime
 
-class UserManager(BaseUserManager):
+
+class UserManager(BaseUserManager["User"]):
     use_in_migrations = True
 
     def _create_user(self, email, password, **extra_fields):

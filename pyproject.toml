@@ -1,0 +1,41 @@
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = ["migrations"]
+
+[tool.ruff.lint]
+# E/F: pyflakes + pycodestyle core rules. I: import sorting (replaces a separate isort —
+# ruff's own isort-compatible rules do the same job as one less tool to configure and run).
+# UP: pyupgrade (flags old-style syntax a newer Python version makes unnecessary).
+select = ["E", "F", "I", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "config"]
+
+[tool.ruff.lint.per-file-ignores]
+# dev.py/prod.py/test.py all do `from .base import *` (or from each other) and then use
+# names that came from it — the entire point of Django's layered-settings pattern from
+# commit 2. F403/F405 exist to catch star imports hiding where a name really comes
+# from; here it's deliberate and every settings file does it, so it's a project-wide
+# rule, not something to silence line by line.
+"config/settings/*.py" = ["F403", "F405"]
+
+[tool.black]
+line-length = 100
+target-version = ["py313"]
+extend-exclude = "migrations"
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main"]
+python_version = "3.13"
+exclude = ["migrations/"]
+# Retrofitting type hints across nine commits of existing code in one pass isn't this
+# commit's job — this establishes the check now, permissively, so every *new* line
+# written from here on can be held to it, and strictness can be tightened incrementally
+# later instead of demanding a full rewrite today.
+ignore_missing_imports = true
+disallow_untyped_defs = false
+check_untyped_defs = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings.dev"

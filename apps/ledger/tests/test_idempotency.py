@@ -4,8 +4,8 @@ import pytest
 from django.db import connection
 from rest_framework.test import APIClient
 
-from apps.users.factories import UserFactory
-from apps.wallets.factories import WalletFactory
+from apps.users.factories import make_user
+from apps.wallets.factories import make_wallet
 
 
 def transfer_payload(from_wallet, to_wallet, amount):
@@ -15,10 +15,10 @@ def transfer_payload(from_wallet, to_wallet, amount):
 @pytest.mark.django_db
 class TestIdempotency:
     def test_repeated_request_with_same_key_replays_the_response(self):
-        sender = UserFactory()
-        receiver = UserFactory()
-        from_wallet = WalletFactory(owner=sender, currency="USD", balance=10000)
-        to_wallet = WalletFactory(owner=receiver, currency="USD", balance=0)
+        sender = make_user()
+        receiver = make_user()
+        from_wallet = make_wallet(owner=sender, currency="USD", balance=10000)
+        to_wallet = make_wallet(owner=receiver, currency="USD", balance=0)
         client = APIClient()
         client.force_authenticate(user=sender)
         payload = transfer_payload(from_wallet, to_wallet, 1000)
@@ -38,10 +38,10 @@ class TestIdempotency:
         assert from_wallet.balance == 9000  # debited exactly once, not twice
 
     def test_same_key_with_a_different_payload_is_rejected(self):
-        sender = UserFactory()
-        receiver = UserFactory()
-        from_wallet = WalletFactory(owner=sender, currency="USD", balance=10000)
-        to_wallet = WalletFactory(owner=receiver, currency="USD", balance=0)
+        sender = make_user()
+        receiver = make_user()
+        from_wallet = make_wallet(owner=sender, currency="USD", balance=10000)
+        to_wallet = make_wallet(owner=receiver, currency="USD", balance=0)
         client = APIClient()
         client.force_authenticate(user=sender)
 
@@ -61,10 +61,10 @@ class TestIdempotency:
         assert response.status_code == 409
 
     def test_without_a_key_repeated_requests_are_independent(self):
-        sender = UserFactory()
-        receiver = UserFactory()
-        from_wallet = WalletFactory(owner=sender, currency="USD", balance=10000)
-        to_wallet = WalletFactory(owner=receiver, currency="USD", balance=0)
+        sender = make_user()
+        receiver = make_user()
+        from_wallet = make_wallet(owner=sender, currency="USD", balance=10000)
+        to_wallet = make_wallet(owner=receiver, currency="USD", balance=0)
         client = APIClient()
         client.force_authenticate(user=sender)
         payload = transfer_payload(from_wallet, to_wallet, 1000)
@@ -83,10 +83,10 @@ class TestIdempotencyConcurrency:
         atomic-insert-based locking in run_idempotently() holds under real concurrent
         requests, not just sequential retries — a broken version of this could let two
         requests both believe they were first and both execute the transfer."""
-        sender = UserFactory()
-        receiver = UserFactory()
-        from_wallet = WalletFactory(owner=sender, currency="USD", balance=10000)
-        to_wallet = WalletFactory(owner=receiver, currency="USD", balance=0)
+        sender = make_user()
+        receiver = make_user()
+        from_wallet = make_wallet(owner=sender, currency="USD", balance=10000)
+        to_wallet = make_wallet(owner=receiver, currency="USD", balance=0)
         payload = transfer_payload(from_wallet, to_wallet, 2500)
 
         results = []
@@ -97,7 +97,10 @@ class TestIdempotencyConcurrency:
             client.force_authenticate(user=sender)
             try:
                 response = client.post(
-                    "/api/v1/ledger/transfers/", payload, format="json", HTTP_IDEMPOTENCY_KEY="race-key"
+                    "/api/v1/ledger/transfers/",
+                    payload,
+                    format="json",
+                    HTTP_IDEMPOTENCY_KEY="race-key",
                 )
                 txn_id = response.data.get("id") if response.status_code == 201 else None
                 with lock:

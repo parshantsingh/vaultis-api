@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 import factory
 
 from .models import Role, User
@@ -17,7 +19,14 @@ class UserFactory(factory.django.DjangoModelFactory):
     # would store the password as plaintext — it has no idea a User needs set_password().
     # This hook runs after the instance exists and hashes the password properly instead.
     @factory.post_generation
-    def password(self, create, extracted, **kwargs):
+    def password(self: User, create: bool, extracted: str | None, **kwargs: object) -> None:
         self.set_password(extracted or "testpass123")
         if create:
             self.save()
+
+
+def make_user(**kwargs: Any) -> User:
+    """Typed wrapper around UserFactory — same reasoning as make_wallet() in
+    apps/wallets/factories.py: bridges the one spot where factory_boy's actual runtime
+    return type (a User) doesn't match what its stubs tell mypy (a UserFactory)."""
+    return cast(User, UserFactory(**kwargs))

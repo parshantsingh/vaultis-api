@@ -1,4 +1,4 @@
-from .dev import *  # noqa: F401,F403
+from .dev import *  # noqa: F401
 
 # The concurrency tests fire a burst of requests from the same user in rapid succession —
 # that's exactly what DEFAULT_THROTTLE_RATES exists to block, but it has nothing to do
