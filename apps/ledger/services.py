@@ -3,6 +3,7 @@ import logging
 from django.db import transaction as db_transaction
 from django.db.models import Sum
 
+from apps.core.metrics import TRANSFERS
 from apps.wallets.models import Wallet
 
 from .exceptions import (
@@ -54,10 +55,9 @@ def transfer_funds(*, from_wallet_id, to_wallet_id, amount):
     from_wallet.save(update_fields=["balance", "updated_at"])
     to_wallet.save(update_fields=["balance", "updated_at"])
 
-    # on_commit, not a plain call: this line should only exist if the database
-    # transaction actually committed, not if something later rolled it back.
-    db_transaction.on_commit(
-        lambda: logger.info(
+    def record_completed() -> None:
+        TRANSFERS.labels("completed").inc()
+        logger.info(
             "transfer completed",
             extra={
                 "transaction_id": str(txn.id),
@@ -67,6 +67,9 @@ def transfer_funds(*, from_wallet_id, to_wallet_id, amount):
                 "currency": from_wallet.currency,
             },
         )
-    )
+
+    # on_commit, not a plain call: the log line and the counter should only exist if the
+    # database transaction actually committed, not if something later rolled it back.
+    db_transaction.on_commit(record_completed)
 
     return txn

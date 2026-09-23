@@ -28,13 +28,15 @@ User accounts, wallets, and transfers (row-locked, concurrency-safe, idempotent)
 docker compose exec web pytest
 ```
 
-35 tests, including two that fire real concurrent requests at the transfer and idempotency endpoints to prove the row-locking and race-safety actually hold under load, not just in a single-request happy path. Coverage is gated at 90%. Every push to `main` and every pull request runs this same suite via GitHub Actions (see the badge above).
+44 tests, including two that fire real concurrent requests at the transfer and idempotency endpoints to prove the row-locking and race-safety actually hold under load, not just in a single-request happy path. Coverage is gated at 90%. Every push to `main` and every pull request runs this same suite via GitHub Actions (see the badge above).
 
 ## Observability
 
 Every request gets an `X-Request-ID` (a well-formed one supplied by the caller is kept, anything else is replaced), returned on the response and stamped on every log line that request produces, including Django's own warnings. Logs are JSON by default (`LOG_FORMAT=plain` for a readable terminal), so one `grep <request-id>` reconstructs a request end to end. Transfers log their outcome (completed ones only after the database commit), and idempotency-key reuse is logged.
 
 `/health/` is a liveness check that touches nothing else; `/health/ready/` also checks the database and returns 503 if it can't be reached.
+
+`/metrics` exposes Prometheus metrics: request counts and latency by method, route template, and status (never the raw path, so IDs in URLs can't blow up the number of series), and `vaultis_transfers_total` by outcome. It requires `Authorization: Bearer $METRICS_TOKEN`; with no token configured it's only served while `DEBUG` is on and returns 404 otherwise.
 
 ## Code quality
 

@@ -46,6 +46,7 @@ AUTH_USER_MODEL = "users.User"
 
 MIDDLEWARE = [
     "apps.core.middleware.RequestContextMiddleware",
+    "apps.core.middleware.MetricsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -140,6 +141,10 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
+
+# Bearer token the /metrics endpoint requires. Empty means "no token configured": the
+# endpoint is then open only while DEBUG is on, and disabled (404) otherwise.
+METRICS_TOKEN = env("METRICS_TOKEN", default="")
 
 # "json" for anything that ships logs somewhere; "plain" is easier to read in a terminal.
 LOG_FORMAT = env("LOG_FORMAT", default="json")

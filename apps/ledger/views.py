@@ -6,6 +6,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 
 from apps.core.idempotency import run_idempotently
+from apps.core.metrics import TRANSFERS
 
 from .exceptions import LedgerError
 from .serializers import TransactionSerializer, TransferSerializer
@@ -33,10 +34,11 @@ class TransferView(GenericAPIView):
                     amount=amount,
                 )
             except LedgerError as exc:
+                TRANSFERS.labels(exc.code).inc()
                 logger.info(
                     "transfer rejected",
                     extra={
-                        "reason": type(exc).__name__,
+                        "reason": exc.code,
                         "from_wallet": str(from_wallet.id),
                         "to_wallet": str(to_wallet.id),
                         "amount": amount,
