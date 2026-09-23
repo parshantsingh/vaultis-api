@@ -45,6 +45,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 AUTH_USER_MODEL = "users.User"
 
 MIDDLEWARE = [
+    "apps.core.middleware.RequestContextMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -140,14 +141,27 @@ CELERY_TIMEZONE = TIME_ZONE
 
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 
+# "json" for anything that ships logs somewhere; "plain" is easier to read in a terminal.
+LOG_FORMAT = env("LOG_FORMAT", default="json")
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "filters": {
+        "request_id": {"()": "apps.core.logs.RequestIdFilter"},
+    },
     "formatters": {
-        "verbose": {"format": "%(asctime)s %(levelname)s %(name)s %(message)s"},
+        "json": {"()": "apps.core.logs.JsonFormatter"},
+        "plain": {
+            "format": "%(asctime)s %(levelname)s %(name)s [%(request_id)s] %(message)s",
+        },
     },
     "handlers": {
-        "console": {"class": "logging.StreamHandler", "formatter": "verbose"},
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": LOG_FORMAT,
+            "filters": ["request_id"],
+        },
     },
     "root": {"handlers": ["console"], "level": "INFO"},
 }

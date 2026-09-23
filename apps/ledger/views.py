@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework import permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import GenericAPIView
@@ -8,6 +10,8 @@ from apps.core.idempotency import run_idempotently
 from .exceptions import LedgerError
 from .serializers import TransactionSerializer, TransferSerializer
 from .services import transfer_funds
+
+logger = logging.getLogger(__name__)
 
 
 class TransferView(GenericAPIView):
@@ -29,6 +33,15 @@ class TransferView(GenericAPIView):
                     amount=amount,
                 )
             except LedgerError as exc:
+                logger.info(
+                    "transfer rejected",
+                    extra={
+                        "reason": type(exc).__name__,
+                        "from_wallet": str(from_wallet.id),
+                        "to_wallet": str(to_wallet.id),
+                        "amount": amount,
+                    },
+                )
                 raise ValidationError(str(exc)) from exc
             return Response(TransactionSerializer(txn).data, status=status.HTTP_201_CREATED)
 

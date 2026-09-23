@@ -1,11 +1,14 @@
 import hashlib
 import json
+import logging
 
 from django.db import IntegrityError
 from django.db import transaction as db_transaction
 from rest_framework.response import Response
 
 from .models import IdempotencyKey
+
+logger = logging.getLogger(__name__)
 
 
 def run_idempotently(*, user, key, fingerprint, operation):
@@ -40,6 +43,10 @@ def run_idempotently(*, user, key, fingerprint, operation):
             )
     except IntegrityError:
         record = IdempotencyKey.objects.get(user=user, key=key)
+        logger.info(
+            "idempotency key reused",
+            extra={"idempotency_key": key, "original_status": record.status},
+        )
         if record.request_hash != fingerprint_hash:
             return Response(
                 {"detail": "This Idempotency-Key was already used with a different request."},

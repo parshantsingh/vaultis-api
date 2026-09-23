@@ -1,3 +1,5 @@
+import logging
+
 from django.db import transaction as db_transaction
 from django.db.models import Sum
 
@@ -10,6 +12,8 @@ from .exceptions import (
     SameWalletError,
 )
 from .models import LedgerEntry, Transaction
+
+logger = logging.getLogger(__name__)
 
 
 @db_transaction.atomic
@@ -49,5 +53,20 @@ def transfer_funds(*, from_wallet_id, to_wallet_id, amount):
     to_wallet.balance += amount
     from_wallet.save(update_fields=["balance", "updated_at"])
     to_wallet.save(update_fields=["balance", "updated_at"])
+
+    # on_commit, not a plain call: this line should only exist if the database
+    # transaction actually committed, not if something later rolled it back.
+    db_transaction.on_commit(
+        lambda: logger.info(
+            "transfer completed",
+            extra={
+                "transaction_id": str(txn.id),
+                "from_wallet": str(from_wallet.id),
+                "to_wallet": str(to_wallet.id),
+                "amount": amount,
+                "currency": from_wallet.currency,
+            },
+        )
+    )
 
     return txn
