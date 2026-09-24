@@ -28,7 +28,14 @@ User accounts, wallets, and transfers (row-locked, concurrency-safe, idempotent)
 docker compose exec web pytest
 ```
 
-44 tests, including two that fire real concurrent requests at the transfer and idempotency endpoints to prove the row-locking and race-safety actually hold under load, not just in a single-request happy path. Coverage is gated at 90%. Every push to `main` and every pull request runs this same suite via GitHub Actions (see the badge above).
+53 tests, including two that fire real concurrent requests at the transfer and idempotency endpoints to prove the row-locking and race-safety actually hold under load, not just in a single-request happy path. Coverage is gated at 90%. Every push to `main` and every pull request runs this same suite via GitHub Actions (see the badge above).
+
+## API
+
+- `POST /api/v1/ledger/transfers/` moves money between wallets (idempotent with an `Idempotency-Key` header).
+- `GET /api/v1/ledger/wallets/<id>/entries/` is a wallet's statement: its ledger entries, newest first, paginated. Someone else's wallet is a 404, the same as one that doesn't exist.
+
+Interactive docs are at `/api/docs/`.
 
 ## Observability
 

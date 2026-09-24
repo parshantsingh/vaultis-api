@@ -29,3 +29,11 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = ["id", "created_at", "entries"]
+
+
+class WalletEntrySerializer(serializers.ModelSerializer):
+    transaction = serializers.UUIDField(source="transaction_id", read_only=True)
+
+    class Meta:
+        model = LedgerEntry
+        fields = ["id", "transaction", "amount", "created_at"]

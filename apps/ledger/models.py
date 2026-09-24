@@ -28,6 +28,12 @@ class LedgerEntry(BaseModel):
 
     class Meta:
         ordering = ["created_at"]
+        indexes = [
+            # Serves the wallet statement query: one wallet's entries, newest first.
+            models.Index(
+                fields=["wallet", "-created_at", "-id"], name="ledger_entry_wallet_recent_idx"
+            ),
+        ]
         constraints = [
             models.CheckConstraint(condition=~Q(amount=0), name="ledger_entry_amount_nonzero"),
         ]
