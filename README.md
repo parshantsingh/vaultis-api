@@ -38,6 +38,8 @@ Every request gets an `X-Request-ID` (a well-formed one supplied by the caller i
 
 `/metrics` exposes Prometheus metrics: request counts and latency by method, route template, and status (never the raw path, so IDs in URLs can't blow up the number of series), and `vaultis_transfers_total` by outcome. It requires `Authorization: Bearer $METRICS_TOKEN`; with no token configured it's only served while `DEBUG` is on and returns 404 otherwise.
 
+`docker compose up` also starts Prometheus (http://localhost:9090) and Grafana (http://localhost:3000), with the scrape config and a dashboard provisioned from `monitoring/` — request rate, 5xx ratio, p95 latency by route, and transfers by outcome. No setup in the UI is needed; the dashboard is recreated from the files in the repo.
+
 ## Code quality
 
 ```bash

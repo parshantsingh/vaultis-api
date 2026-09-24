@@ -1,0 +1,17 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: vaultis-api
+    metrics_path: /metrics
+    static_configs:
+      # "web" is the compose service name. Django checks the Host header against
+      # ALLOWED_HOSTS, so anywhere other than local dev (which allows "*") this hostname
+      # has to be listed there too.
+      - targets: ["web:8000"]
+    # Local dev serves /metrics without a token because DEBUG is on. Anywhere METRICS_TOKEN
+    # is set, Prometheus has to present it:
+    #
+    # authorization:
+    #   type: Bearer
+    #   credentials_file: /etc/prometheus/metrics_token
