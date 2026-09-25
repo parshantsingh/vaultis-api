@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import environ
+from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -156,6 +157,15 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
+# Let our own LOGGING config (JSON, request-id aware) apply to worker output instead of
+# Celery replacing the root logger's handlers with its own format.
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+CELERY_BEAT_SCHEDULE = {
+    "reconcile-ledger": {
+        "task": "apps.ledger.tasks.reconcile_ledger",
+        "schedule": crontab(minute=0),  # top of every hour
+    },
+}
 
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 

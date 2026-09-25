@@ -40,3 +40,27 @@ class LedgerEntry(BaseModel):
 
     def __str__(self):
         return f"{self.transaction_id} · {self.wallet_id} · {self.amount}"
+
+
+class ReconciliationRun(BaseModel):
+    """The result of one ledger integrity check. Rows are never edited after they finish,
+    so the table doubles as an audit trail: a run with no finished_at is one that crashed."""
+
+    finished_at = models.DateTimeField(null=True, blank=True)
+    wallets_checked = models.PositiveIntegerField(default=0)
+    transactions_checked = models.PositiveIntegerField(default=0)
+    wallet_mismatches = models.PositiveIntegerField(default=0)
+    unbalanced_transactions = models.PositiveIntegerField(default=0)
+    # A capped sample of what was found, for diagnosis; the counts above are exact.
+    details = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    @property
+    def is_clean(self) -> bool:
+        return self.wallet_mismatches == 0 and self.unbalanced_transactions == 0
+
+    def __str__(self):
+        state = "clean" if self.is_clean else "DISCREPANCIES"
+        return f"{self.created_at:%Y-%m-%d %H:%M} {state}"

@@ -28,7 +28,7 @@ User accounts, wallets, and transfers (row-locked, concurrency-safe, idempotent)
 docker compose exec web pytest
 ```
 
-58 tests, including two that fire real concurrent requests at the transfer and idempotency endpoints to prove the row-locking and race-safety actually hold under load, not just in a single-request happy path. Coverage is gated at 90%. Every push to `main` and every pull request runs this same suite via GitHub Actions (see the badge above).
+69 tests, including two that fire real concurrent requests at the transfer and idempotency endpoints to prove the row-locking and race-safety actually hold under load, not just in a single-request happy path. Coverage is gated at 90%. Every push to `main` and every pull request runs this same suite via GitHub Actions (see the badge above).
 
 ## API
 
@@ -38,6 +38,10 @@ docker compose exec web pytest
 Interactive docs are at `/api/docs/`.
 
 Rate limits (per minute, counters kept in Redis so they're shared across processes and survive restarts): 10 login attempts per IP, 5 registrations per IP, 30 transfers per user, plus a general 120 per user and 20 per anonymous IP. Throttled requests get a 429 with a `Retry-After` header, and a throttled login doesn't reveal whether the password would have been right.
+
+## Background jobs
+
+`docker compose up` also starts a Celery `worker` and a `beat` scheduler. Once an hour a reconciliation task checks that every wallet's stored balance equals the sum of its ledger entries and that every transaction's entries sum to zero. Each run is saved as a `ReconciliationRun` (visible in the admin) with exact counts and a capped sample of anything it found, and a run with discrepancies logs at `ERROR`. The schedule lives in `CELERY_BEAT_SCHEDULE` and is copied into the database by beat, so it can also be inspected in the admin.
 
 ## Observability
 

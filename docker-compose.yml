@@ -1,3 +1,17 @@
+# web, worker, and beat all run the same image; only the command differs.
+x-app: &app
+  build: .
+  image: vaultis-api:dev
+  volumes:
+    - .:/app
+  env_file:
+    - .env
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_started
+
 services:
   db:
     image: postgres:16-alpine
@@ -17,19 +31,20 @@ services:
     image: redis:7-alpine
 
   web:
-    build: .
+    <<: *app
     command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/app
     ports:
       - "8000:8000"
-    env_file:
-      - .env
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_started
+
+  worker:
+    <<: *app
+    command: celery -A config worker -l info
+
+  beat:
+    <<: *app
+    # DatabaseScheduler keeps the schedule in the database, so it can be inspected and
+    # edited in the admin; CELERY_BEAT_SCHEDULE in settings seeds it on startup.
+    command: celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 
   prometheus:
     image: prom/prometheus:v3.14.0
