@@ -28,7 +28,7 @@ User accounts, wallets, and transfers (row-locked, concurrency-safe, idempotent)
 docker compose exec web pytest
 ```
 
-53 tests, including two that fire real concurrent requests at the transfer and idempotency endpoints to prove the row-locking and race-safety actually hold under load, not just in a single-request happy path. Coverage is gated at 90%. Every push to `main` and every pull request runs this same suite via GitHub Actions (see the badge above).
+58 tests, including two that fire real concurrent requests at the transfer and idempotency endpoints to prove the row-locking and race-safety actually hold under load, not just in a single-request happy path. Coverage is gated at 90%. Every push to `main` and every pull request runs this same suite via GitHub Actions (see the badge above).
 
 ## API
 
@@ -36,6 +36,8 @@ docker compose exec web pytest
 - `GET /api/v1/ledger/wallets/<id>/entries/` is a wallet's statement: its ledger entries, newest first, paginated. Someone else's wallet is a 404, the same as one that doesn't exist.
 
 Interactive docs are at `/api/docs/`.
+
+Rate limits (per minute, counters kept in Redis so they're shared across processes and survive restarts): 10 login attempts per IP, 5 registrations per IP, 30 transfers per user, plus a general 120 per user and 20 per anonymous IP. Throttled requests get a 429 with a `Retry-After` header, and a throttled login doesn't reveal whether the password would have been right.
 
 ## Observability
 

@@ -2,6 +2,7 @@
 
 from datetime import timedelta
 from pathlib import Path
+from typing import Any
 
 import environ
 
@@ -98,7 +99,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-REST_FRAMEWORK = {
+REST_FRAMEWORK: dict[str, Any] = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
@@ -113,6 +114,11 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "user": "120/min",
         "anon": "20/min",
+        # Scoped limits for the endpoints where abuse is expensive: password guessing,
+        # account-creation spam, and moving money. Views opt in via `throttle_scope`.
+        "login": "10/min",
+        "register": "5/min",
+        "transfers": "30/min",
     },
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
@@ -131,6 +137,17 @@ SPECTACULAR_SETTINGS = {
     "idempotent transaction APIs, and Stripe-funded transfers.",
     "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
+}
+
+# Throttle counters live here. The default (per-process memory) would give every server
+# process its own separate count, so a client could multiply its allowance by however many
+# workers there are, and every restart would reset it. Redis makes the count shared.
+# Database 1 keeps it apart from Celery's database 0.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("CACHE_URL", default="redis://localhost:6379/1"),
+    }
 }
 
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")

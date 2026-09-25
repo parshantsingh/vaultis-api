@@ -5,6 +5,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle, UserRateThrottle
 
 from apps.core.idempotency import run_idempotently
 from apps.core.metrics import TRANSFERS
@@ -25,6 +26,9 @@ logger = logging.getLogger(__name__)
 class TransferView(GenericAPIView):
     serializer_class = TransferSerializer
     permission_classes = [permissions.IsAuthenticated]
+    # Both apply: the general per-user limit and the tighter one for moving money.
+    throttle_classes = [UserRateThrottle, ScopedRateThrottle]
+    throttle_scope = "transfers"
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
